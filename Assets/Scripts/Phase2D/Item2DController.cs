@@ -6,6 +6,10 @@ public class Item2DController : MonoBehaviour
     [Header("形状（セル座標オフセット）")]
     public Vector2Int[] baseShape = { new(0, 0) };
 
+    [Header("スプライト")]
+    public Sprite roomSprite;
+    public Sprite boxSprite;
+
     // 内部状態
     int _rotIndex = 0;
     Vector3 _originalPos;
@@ -26,17 +30,18 @@ public class Item2DController : MonoBehaviour
 
     void OnMouseDown()
     {
-        // 配置済みなら解除
-        if (_placedBox != null)
-        {
-            _placedBox.Grid.Remove(_placedCells);
-            _placedCells.Clear();
-            _placedBox = null;
-        }
+    // 配置済みなら解除
+    if (_placedBox != null)
+    {
+        _placedBox.Grid.Remove(_placedCells);
+        _placedCells.Clear();
+        _placedBox = null;
+    }
 
-        _originalPos = transform.position;
-        _isDragging  = true;
-        _sr.sortingOrder = 10;
+    _originalPos = transform.position;
+    _isDragging  = true;
+    _sr.sortingOrder = 10;
+    if (boxSprite) _sr.sprite = boxSprite;  // ドラッグ開始時に切り替え
     }
 
     void OnMouseDrag()
@@ -74,6 +79,7 @@ public class Item2DController : MonoBehaviour
             _placedCells = new List<Vector2Int>(cells);
 
             _sr.sortingOrder = 5;
+            if (boxSprite) _sr.sprite = boxSprite;
             RoomManager.Instance?.OnItemPacked(this);
         }
         else
@@ -98,10 +104,11 @@ public class Item2DController : MonoBehaviour
 
     void ReturnToOrigin()
     {
-        transform.position = _originalPos;
-        transform.rotation = Quaternion.identity;
-        _rotIndex        = 0;
-        _sr.sortingOrder = 5;
+    transform.position = _originalPos;
+    transform.rotation = Quaternion.identity;
+    _rotIndex        = 0;
+    _sr.sortingOrder = 5;
+    if (roomSprite) _sr.sprite = roomSprite;  // 元の位置に戻す時はroom
     }
 
     /// <summary>回転後のセル座標リストを返す</summary>
