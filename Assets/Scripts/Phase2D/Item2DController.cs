@@ -9,8 +9,9 @@ public class Item2DController : MonoBehaviour
     [Header("スプライト")]
     public Sprite roomSprite;
     public Sprite boxSprite;
+    public Vector3 roomScale = Vector3.one;
+    public Vector3 boxScale  = Vector3.one;
 
-    // 内部状態
     int _rotIndex = 0;
     Vector3 _originalPos;
     bool _isDragging = false;
@@ -30,18 +31,18 @@ public class Item2DController : MonoBehaviour
 
     void OnMouseDown()
     {
-    // 配置済みなら解除
-    if (_placedBox != null)
-    {
-        _placedBox.Grid.Remove(_placedCells);
-        _placedCells.Clear();
-        _placedBox = null;
-    }
+        if (_placedBox != null)
+        {
+            _placedBox.Grid.Remove(_placedCells);
+            _placedCells.Clear();
+            _placedBox = null;
+        }
 
-    _originalPos = transform.position;
-    _isDragging  = true;
-    _sr.sortingOrder = 10;
-    if (boxSprite) _sr.sprite = boxSprite;  // ドラッグ開始時に切り替え
+        _originalPos = transform.position;
+        _isDragging  = true;
+        _sr.sortingOrder = 10;
+        if (boxSprite) _sr.sprite = boxSprite;
+        transform.localScale = boxScale;
     }
 
     void OnMouseDrag()
@@ -49,7 +50,6 @@ public class Item2DController : MonoBehaviour
         Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mouseWorld.z = 0;
         transform.position = mouseWorld;
-
         _placement?.UpdatePreview(this);
     }
 
@@ -70,7 +70,6 @@ public class Item2DController : MonoBehaviour
 
         if (grid.CanPlace(cells, this))
         {
-            // スナップ位置に移動
             transform.position = GetSnapPosition(grid, cells);
             transform.rotation = Quaternion.Euler(0, 0, -_rotIndex * 90f);
 
@@ -80,6 +79,8 @@ public class Item2DController : MonoBehaviour
 
             _sr.sortingOrder = 5;
             if (boxSprite) _sr.sprite = boxSprite;
+            transform.localScale = boxScale;
+            box.RegisterItem(this);
             RoomManager.Instance?.OnItemPacked(this);
         }
         else
@@ -100,18 +101,16 @@ public class Item2DController : MonoBehaviour
         }
     }
 
-    // ─── ヘルパー ────────────────────────────
-
     void ReturnToOrigin()
     {
-    transform.position = _originalPos;
-    transform.rotation = Quaternion.identity;
-    _rotIndex        = 0;
-    _sr.sortingOrder = 5;
-    if (roomSprite) _sr.sprite = roomSprite;  // 元の位置に戻す時はroom
+        transform.position = _originalPos;
+        transform.rotation = Quaternion.identity;
+        _rotIndex        = 0;
+        _sr.sortingOrder = 5;
+        if (roomSprite) _sr.sprite = roomSprite;
+        transform.localScale = roomScale;
     }
 
-    /// <summary>回転後のセル座標リストを返す</summary>
     public List<Vector2Int> GetRotatedShape()
     {
         var result = new List<Vector2Int>();
@@ -120,7 +119,6 @@ public class Item2DController : MonoBehaviour
         return result;
     }
 
-    /// <summary>グリッド上のセル座標（アイテム現在位置基準）</summary>
     public List<Vector2Int> GetWorldCells(Grid2DManager grid)
     {
         Vector2Int origin = grid.WorldToCell(transform.position);

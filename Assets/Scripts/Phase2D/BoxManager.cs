@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class BoxManager : MonoBehaviour
 {
@@ -15,12 +16,21 @@ public class BoxManager : MonoBehaviour
 
     public bool IsLocked => _state != BoxState.Open;
 
+    // この箱に収納されたアイテムを記録
+    List<Item2DController> _packedItems = new();
+
     void Awake()
     {
         Grid = GetComponent<Grid2DManager>();
     }
 
-    /// <summary>外部（ボタンなど）から蓋を閉める</summary>
+    /// <summary>アイテムが収納されたときに登録</summary>
+    public void RegisterItem(Item2DController item)
+    {
+        if (!_packedItems.Contains(item))
+            _packedItems.Add(item);
+    }
+
     public void RequestClose()
     {
         if (_state != BoxState.Open) return;
@@ -32,9 +42,15 @@ public class BoxManager : MonoBehaviour
             OnCloseAnimationComplete();
     }
 
-    /// <summary>LidController のアニメーション完了後に呼ばれる</summary>
     public void OnCloseAnimationComplete()
     {
+        // 収納済みアイテムを全て非表示
+        foreach (var item in _packedItems)
+        {
+            if (item != null)
+                item.gameObject.SetActive(false);
+        }
+
         Debug.Log($"[BoxManager] Box {BoxID} 梱包完了");
         TransferManager.Instance?.RegisterClosedBox(this);
         BoxSetManager.Instance?.OnBoxClosed(this);
